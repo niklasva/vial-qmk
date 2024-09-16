@@ -7,6 +7,7 @@
 #define VIAL_UNLOCK_COMBO_COLS { 5, 4 }
 
 #define DYNAMIC_KEYMAP_LAYER_COUNT 2
+#define ADB_MOUSE_MAXACC 1
 
 #define LAYOUT_ext_iso( \
     K35,  K7A,K78,K63,K76, K60,K61,K62,K64, K65,K6D,K67,K6F, K69,K6B,K71,              K7F, \
