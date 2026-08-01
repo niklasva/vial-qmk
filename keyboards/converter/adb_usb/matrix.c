@@ -19,6 +19,7 @@ Ported to QMK by Peter Roe <pete@13bit.me>
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "usb_util.h"
 #include <avr/io.h>
 #include <util/delay.h>
 #include "print.h"
@@ -77,6 +78,7 @@ void matrix_init(void)
     // print("debug enabled.\n");
 
     matrix_init_kb();
+    led_set(0x01);
 }
 
 #ifdef ADB_MOUSE_ENABLE
