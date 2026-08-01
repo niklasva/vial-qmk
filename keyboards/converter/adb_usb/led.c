@@ -19,9 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <util/delay.h>
 #include "adb.h"
 #include "led.h"
+#include "usb_util.h"
 
 
 void led_set(uint8_t usb_led)
 {
-    adb_host_kbd_led(~usb_led);
+    // The ADB LED bits are active low. Keep all keyboard LEDs off while
+    // running from the battery; the original LEDs are a substantial load.
+    adb_host_kbd_led(usb_vbus_state() ? ~usb_led : 0x07);
 }

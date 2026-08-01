@@ -82,7 +82,6 @@ void matrix_init(void)
     // print("debug enabled.\n");
 
     matrix_init_kb();
-    led_set(0x01);
 }
 
 #ifdef ADB_MOUSE_ENABLE
@@ -96,15 +95,25 @@ static report_mouse_t mouse_report = {};
 
 void housekeeping_task_kb(void) {
     bool usb_connected = usb_connected_state();
+    bool usb_powered   = usb_vbus_state();
 
 #ifdef BLUETOOTH_BLUEFRUIT_LE
     static bool advertising_state_initialized = false;
     static bool previous_usb_connected         = false;
+    static bool led_state_initialized           = false;
+    static bool previous_usb_powered            = false;
 
     if (!advertising_state_initialized || usb_connected != previous_usb_connected) {
         if (bluefruit_le_set_advertising(!usb_connected)) {
             previous_usb_connected         = usb_connected;
             advertising_state_initialized = true;
+        }
+    }
+
+    if (!led_state_initialized || usb_powered != previous_usb_powered) {
+        if (bluefruit_le_set_mode_leds(usb_powered)) {
+            previous_usb_powered  = usb_powered;
+            led_state_initialized = true;
         }
     }
 #endif
