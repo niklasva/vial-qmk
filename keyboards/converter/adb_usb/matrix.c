@@ -186,7 +186,6 @@ uint8_t matrix_scan(void)
 
     /* tick of last polling */
     static uint16_t tick_ms;
-    uint16_t tick_rate = usb_connected_state() ? 12 : 24;
 
     codes = extra_key;
     extra_key = 0xFFFF;
@@ -194,7 +193,7 @@ uint8_t matrix_scan(void)
     if ( codes == 0xFFFF )
     {
         // polling with 12ms interval
-        if (timer_elapsed(tick_ms) < tick_rate) return 0;
+        if (timer_elapsed(tick_ms) < 12) return 0;
         tick_ms = timer_read();
 
         codes = adb_host_kbd_recv();
