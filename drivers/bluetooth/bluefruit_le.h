@@ -24,6 +24,9 @@ extern bool bluefruit_le_query_is_connected(void);
  * calling ble_task() periodically. */
 extern bool bluefruit_le_is_connected(void);
 
+/* Start advertising, or disconnect Bluetooth and stop advertising. */
+extern bool bluefruit_le_set_advertising(bool enabled);
+
 extern void bluefruit_le_init(void);
 
 /* Call this periodically to process BLE-originated things */

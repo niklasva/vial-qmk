@@ -32,6 +32,10 @@ Ported to QMK by Peter Roe <pete@13bit.me>
 #include "led.h"
 #include "timer.h"
 
+#ifdef BLUETOOTH_BLUEFRUIT_LE
+#    include "bluefruit_le.h"
+#endif
+
 #ifndef ADB_MOUSE_MAXACC
 #    define ADB_MOUSE_MAXACC 8
 #endif
@@ -91,7 +95,21 @@ void matrix_init(void)
 static report_mouse_t mouse_report = {};
 
 void housekeeping_task_kb(void) {
-    if (usb_connected_state()) {
+    bool usb_connected = usb_connected_state();
+
+#ifdef BLUETOOTH_BLUEFRUIT_LE
+    static bool advertising_state_initialized = false;
+    static bool previous_usb_connected         = false;
+
+    if (!advertising_state_initialized || usb_connected != previous_usb_connected) {
+        if (bluefruit_le_set_advertising(!usb_connected)) {
+            previous_usb_connected         = usb_connected;
+            advertising_state_initialized = true;
+        }
+    }
+#endif
+
+    if (usb_connected) {
         adb_mouse_task();
     }
 }

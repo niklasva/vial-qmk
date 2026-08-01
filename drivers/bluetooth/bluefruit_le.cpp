@@ -38,6 +38,7 @@ static struct {
     bool is_connected;
     bool initialized;
     bool configured;
+    bool advertising_enabled;
 
 #define ProbedEvents 1
 #define UsingEvents 2
@@ -280,9 +281,10 @@ static void resp_buf_wait(const char *cmd) {
 }
 
 void bluefruit_le_init(void) {
-    state.initialized  = false;
-    state.configured   = false;
-    state.is_connected = false;
+    state.initialized         = false;
+    state.configured          = false;
+    state.is_connected        = false;
+    state.advertising_enabled = true;
 
     gpio_set_pin_input(BLUEFRUIT_LE_IRQ_PIN);
 
@@ -418,6 +420,41 @@ bool bluefruit_le_is_connected(void) {
     return state.is_connected;
 }
 
+bool bluefruit_le_set_advertising(bool enabled) {
+    if (!state.configured) {
+        return false;
+    }
+
+    if (state.advertising_enabled == enabled) {
+        return true;
+    }
+
+    state.advertising_enabled = enabled;
+
+    // There is nothing to advertise while connected. If advertising is being
+    // disabled (for example because USB became active), disconnect Bluetooth
+    // before stopping advertising so USB takes over completely.
+    if (state.is_connected) {
+        if (enabled) {
+            return true;
+        }
+
+        char response[16];
+        if (!at_command_P(PSTR("AT+GAPDISCONNECT"), response, sizeof(response))) {
+            state.advertising_enabled = true;
+            return false;
+        }
+    }
+
+    char response[16];
+    if (!at_command_P(enabled ? PSTR("AT+GAPSTARTADV") : PSTR("AT+GAPSTOPADV"), response, sizeof(response))) {
+        state.advertising_enabled = !enabled;
+        return false;
+    }
+
+    return true;
+}
+
 bool bluefruit_le_enable_keyboard(void) {
     char resbuf[128];
 
@@ -461,7 +498,8 @@ bool bluefruit_le_enable_keyboard(void) {
         }
     }
 
-    state.configured = true;
+    state.configured          = true;
+    state.advertising_enabled = true;
 
     // Check connection status in a little while; allow the ATZ time
     // to kick in.
@@ -478,6 +516,13 @@ static void set_connected(bool connected) {
             dprint("BLE disconnected\n");
         }
         state.is_connected = connected;
+
+        if (!connected) {
+            // Bluefruit may automatically resume advertising on disconnect.
+            // Reapply the state selected by the keyboard.
+            char response[16];
+            at_command_P(state.advertising_enabled ? PSTR("AT+GAPSTARTADV") : PSTR("AT+GAPSTOPADV"), response, sizeof(response));
+        }
 
         // TODO: if modifiers are down on the USB interface and
         // we cut over to BLE or vice versa, they will remain stuck.
